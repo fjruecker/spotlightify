@@ -1,73 +1,121 @@
-# remove _ from filename before use, and the _config.json folder in user_info dir.
-from json import dump, dumps, load, loads
+from spotipy.oauth2 import SpotifyOAuth
+from json import dump, load
 from definitions import CACHE_DIR
+from os import environ
+
+scopes = [
+    "streaming user-library-read",
+    "user-modify-playback-state",
+    "user-read-playback-state",
+    "user-library-modify",
+    "user-follow-read",
+    "playlist-read-private"
+]
 
 
 class Config:
+    def __init__(self):
+        self._username = ""
+        self._client_id = ""
+        self._client_secret = ""
+        self._redirect_uri = ""
 
-	def __init__(self, username, client_id, client_secret):
-		self._username = username
-		self._client_id = client_id,
-		self._client_secret = client_secret
+        self._scope = " ".join(scopes)
+        self.config_path = f"{CACHE_DIR}config.json"
 
-		try:
-			with open(f"{CACHE_DIR}config.json") as file:
-				self.open_json()
-		except FileNotFoundError:
-			print("Cache.json does not exist.")
-			print("Creating file...")
-			self.create_file()
+        self.open_env()
+        if not self.is_valid():
+            self.open_json()
 
-	def create_file(self):
-		""" Generates the json in the correct dir."""
-		data_set = {"username": "value", "client_id": "value", "client_secret": "value"}
-		with open(f"{CACHE_DIR}config.json", "w", encoding='utf-8') as file:
-			dump(data_set, file, ensure_ascii=False, indent=4)
+    def open_env(self):
+        if all(p in environ for p in
+               ["SPOTIPY_CLIENT_ID", "SPOTIPY_CLIENT_SECRET", "SPOTIPY_REDIRECT_URI", "USERNAME"]):
+            self._username = environ["USERNAME"]
+            self._client_id = environ["SPOTIPY_CLIENT_ID"]
+            self._client_secret = environ["SPOTIPY_CLIENT_SECRET"]
+            self._redirect_uri = environ["SPOTIPY_REDIRECT_URI"]
+        else:
+            print("Environment variables not found")
 
-	def open_json(self):
-		""" Opens JSON with specific val that's passed to the property decorated methods """
-		with open(f"{CACHE_DIR}config.json") as file:
-			json_obj = load(file)
-		return json_obj
+    def open_json(self):
+        """ Opens JSON with specific val that's passed to the property decorated methods """
+        try:
+            with open(self.config_path) as file:
+                params = load(file)
+                if all(p in params for p in ["username", "client_id", "client_secret", "redirect_uri"]):
+                    self._username = params["username"]
+                    self._client_id = params["client_id"]
+                    self._client_secret = params["client_secret"]
+                    self._redirect_uri = params["redirect_uri"]
 
-	def save_json(self, username, client_id, client_secret ):
-		""" Method creates config.json in the correct dir"""
-		data = {
-			"username": f"{username}",
-			"client_id": f"{client_id}",
-			"client_secret": f"{client_secret}"
-		}
+        except FileNotFoundError:
+            print("config.json does not exist.")
 
-		with open(f"{CACHE_DIR}config.json", "w") as file:
-			dump(data, file)
-			print("Config updated")
+    def save_json(self):
+        """ Method creates config.json in the correct dir"""
+        data = {
+            "username": self._username,
+            "client_id": self._client_id,
+            "client_secret": self._client_secret,
+            "redirect_uri": self._redirect_uri
+        }
 
-	@property
-	def username(self):
-		js = self.open_json()
-		self._username = js['username']
-		return self._username
+        with open(self.config_path, "w") as file:
+            dump(data, file)
+            print("Config updated")
 
-	@username.setter
-	def username(self, val):
-		self._username = val
+    def get_oauth(self):
+        return SpotifyOAuth(
+            client_id=self._client_id,
+            client_secret=self._client_secret,
+            username=self._username,
+            redirect_uri=self._redirect_uri,
+            scope=self._scope
+        )
 
-	@property
-	def client_id(self):
-		js = self.open_json()
-		self._client_id = js['client_id']
-		return self._client_id
+    def is_valid(self):
+        # TODO sort this out
+        if len(self.client_id) != 32:
+            return False
+        if len(self._client_secret) != 32:
+            return False
+        if len(self._redirect_uri) != 0:
+            return False
 
-	@client_id.setter
-	def client_id(self, val):
-		self._client_id = val
+        return True
 
-	@property
-	def client_sec(self):
-		js = self.open_json()
-		self._client_secret = js['client_secret']
-		return self._client_secret
+    @property
+    def username(self):
+        return self._username
 
-	@client_sec.setter
-	def client_sec(self, _client_secret):
-		self._client_secret = _client_secret
+    @username.setter
+    def username(self, val):
+        self._username = val
+        self.save_json()
+
+    @property
+    def client_id(self):
+        return self._client_id
+
+    @client_id.setter
+    def client_id(self, val):
+        self._client_id = val
+        self.save_json()
+
+    @property
+    def client_secret(self):
+        return self._client_secret
+
+    @client_secret.setter
+    def client_secret(self, val):
+        self._client_secret = val
+        self.save_json()
+
+    @property
+    def redirect_uri(self):
+        return self._redirect_uri
+
+    @redirect_uri.setter
+    def redirect_uri(self, val):
+        self._redirect_uri = val
+        self.save_json()
