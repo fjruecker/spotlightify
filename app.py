@@ -1,12 +1,14 @@
 from threading import Thread
 from pynput.mouse import Button, Controller
+from queue import Queue
 from spotipy import Spotify, oauth2
-from os import sep, environ
+from os import sep, path, mkdir, kill, getpid, environ
 from shortcuts import listener
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QMenu, QAction, QSystemTrayIcon
-from ui import Ui
+from spotlight.ui import Ui
 from time import sleep
+from spotlight.interactions import Interactions
 from definitions import ASSETS_DIR
 from interactions import Interactions
 from caching import CacheManager, SongQueue, ImageQueue
@@ -25,7 +27,7 @@ else:
 app = QApplication([])
 app.setQuitOnLastWindowClosed(False)
 scope = "streaming user-library-read user-modify-playback-state user-read-playback-state user-library-modify " \
-        "playlist-read-private playlist-read-private user-follow-read"
+        "playlist-read-private playlist-read-private playlist-read-collaborative user-follow-read"
 
 sp_oauth = oauth2.SpotifyOAuth(client_id=CLIENT_ID, client_secret=CLIENT_SECRET, redirect_uri=redirect_uri,
                                scope=scope, username=USERNAME)
@@ -43,11 +45,7 @@ except:
 
 def exit_app():
     ui.close()  # visually removes ui quicker
-    if cache_manager.has_running_tasks():
-        print("Tasks running, not exiting")
-        return
-
-    raise Exception("Exit Command")
+    kill(getpid(), 9)
 
 
 def show_ui():
@@ -58,7 +56,7 @@ def show_ui():
     ui.raise_()
     ui.activateWindow()
     focus_ui()
-    ui.function_row.refresh()  # refreshes function row buttons
+    ui.function_row.refresh(None)  # refreshes function row buttons
 
 
 def focus_ui():  # Only way I could think of to properly focus the ui
@@ -85,7 +83,7 @@ image_queue = ImageQueue()
 interactions = Interactions(sp, token_info, sp_oauth, exit_app, song_queue)
 
 # UI
-ui = Ui(interactions)
+ui = Ui(interactions, sp)
 
 # Create icon
 icon = QIcon(f"{ASSETS_DIR}img{sep}logo_small.png")
