@@ -9,8 +9,7 @@ from ui import Ui
 from time import sleep
 from definitions import ASSETS_DIR
 from interactions import Interactions
-from caching.manager import CacheManager
-from caching.queues import SongQueue, ImageQueue
+from caching import CacheManager, SongQueue, ImageQueue
 from colors import colors
 
 #  Allow users to use the default spotipy env variables
