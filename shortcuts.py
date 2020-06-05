@@ -1,13 +1,13 @@
 from pynput import keyboard
 
+combinations = [
+    {keyboard.Key.ctrl, keyboard.Key.space},
+    {keyboard.Key.ctrl_l, keyboard.Key.space},
+    {keyboard.Key.ctrl_r, keyboard.Key.space}
+]
+
 
 def listener(open_ui):
-    combinations = [
-        {keyboard.Key.ctrl, keyboard.Key.space},
-        {keyboard.Key.ctrl_l, keyboard.Key.space},
-        {keyboard.Key.ctrl_r, keyboard.Key.space}
-    ]
-
     pressed_keys = set()
 
     def get_vk(key):

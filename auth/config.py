@@ -9,7 +9,9 @@ scopes = [
     "user-read-playback-state",
     "user-library-modify",
     "user-follow-read",
-    "playlist-read-private"
+    "playlist-read-private",
+    "playlist-read-collaborative",
+    "user-follow-read"
 ]
 
 
@@ -74,7 +76,7 @@ class Config:
         )
 
     def is_valid(self):
-        # TODO sort this out
+        # TODO needs work
         if len(self.client_id) != 32:
             return False
         if len(self._client_secret) != 32:
