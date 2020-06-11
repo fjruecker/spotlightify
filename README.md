@@ -53,7 +53,11 @@ pip install -r requirements.txt
 #### Linux
 
 ```
+# For Debian-based systems (like Ubuntu):
 sudo apt-get install python3-pyqt5
+# For Arch Linux, install the package python-pyqt5
+sudo pacman -S python-pyqt5
+
 cd path/to/spotlightify-root
 python3 -m venv venv
 . venv/bin/activate
